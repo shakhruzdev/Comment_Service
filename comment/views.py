@@ -14,9 +14,10 @@ class CommentViewSet(ViewSet):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'post_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='post_id', required=True),
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description='message', required=True),
-            }
+                'post_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='post_id'),
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description='message'),
+            },
+            required=['post_id', 'message']
         ),
         responses={
             404: 'Not Found',

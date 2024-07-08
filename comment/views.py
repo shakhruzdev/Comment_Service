@@ -2,15 +2,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from rest_framework.exceptions import ValidationError
-
 from .models import Comment
 from .serializers import CommentSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 import requests
-
-
-
 
 
 class CommentViewSet(ViewSet):
@@ -45,11 +41,10 @@ class CommentViewSet(ViewSet):
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        user = request.user
-        request.data['author_id'] = user.id
+        request.data['author_id'] = response.json()['id']
         serializer = CommentSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.validated_data['author_id'] = user.id
+            serializer.validated_data['author_id'] = response.json()['id']
             serializer.save()
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -163,7 +158,6 @@ class CommentViewSet(ViewSet):
         tags=['post']
     )
     def post_comments(self, request, *args, **kwargs):
-        print(request.data.get('token'))
         self.check_token(request.data.get('token'))
 
         post_id = request.data.get('post_id')

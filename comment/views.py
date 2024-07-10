@@ -52,13 +52,9 @@ class CommentViewSet(ViewSet):
     @swagger_auto_schema(
         operation_description="Get all comment",
         operation_summary="Get all comment",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'token': openapi.Schema(type=openapi.TYPE_STRING, description='token'),
-            },
-            required=['token']
-        ),
+        manual_parameters=[
+            openapi.Parameter('token', type=openapi.TYPE_STRING, description="token", in_=openapi.IN_PATH)
+        ],
         responses={
             200: CommentSerializer(many=True)
         },

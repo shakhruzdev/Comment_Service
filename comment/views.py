@@ -1,7 +1,6 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
-from rest_framework.exceptions import ValidationError
 from .models import Comment
 from .serializers import CommentSerializer
 from drf_yasg.utils import swagger_auto_schema
@@ -11,10 +10,13 @@ import requests
 
 class CommentViewSet(ViewSet):
 
-    def check_token(self, token):
-        response = requests.post('http://134.122.76.27:8114/api/v1/check/', data={'token': token})
-        if response.status_code != 200:
-            raise ValidationError({'error': 'Invalid token'})
+    def get_token(self):
+        response = requests.post('http://134.122.76.27:8114/api/v1/login/', data={
+            "service_id": 1,
+            "service_name": "Comment",
+            "secret_key": "abd5a92b-57f4-45f4-95f5-bbde628a2131"
+        })
+        return response
 
     @swagger_auto_schema(
         operation_description='Create a comment',
@@ -23,10 +25,9 @@ class CommentViewSet(ViewSet):
             type=openapi.TYPE_OBJECT,
             properties={
                 'post_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='post_id'),
-                'message': openapi.Schema(type=openapi.TYPE_STRING, description='message'),
-                'token': openapi.Schema(type=openapi.TYPE_STRING, description='token'),
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description='message')
             },
-            required=['post_id', 'message', 'token']
+            required=['post_id', 'message']
         ),
         responses={
             404: 'Not Found',
@@ -35,9 +36,11 @@ class CommentViewSet(ViewSet):
         tags=['post']
     )
     def create(self, request):
-        self.check_token(request.data.get('token'))
         access_token = request.headers.get('Authorization')
-        response = requests.get('http://134.122.76.27:8118/api/v1/auth/me/', headers={'Authorization': access_token})
+        response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
+                                 data={'token': self.get_token().json().get('token')},
+                                 headers={'Authorization': access_token})
+
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -46,24 +49,31 @@ class CommentViewSet(ViewSet):
         if serializer.is_valid():
             serializer.validated_data['author_id'] = response.json()['id']
             serializer.save()
+            requests.post('http://134.122.76.27:8112/api/v1/notification/',
+                          json={"user_id": response.json()['id'], "notification_type": 2,
+                                "token": str(self.get_token().json().get('token'))})
+            print(response.json()['id'])
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         operation_description="Get all comment",
         operation_summary="Get all comment",
-        manual_parameters=[
-            openapi.Parameter('token', type=openapi.TYPE_STRING, description="token", in_=openapi.IN_PATH)
-        ],
         responses={
             200: CommentSerializer(many=True)
         },
         tags=['post']
     )
     def get_all(self, request):
-        self.check_token(request.GET.get('token'))
         access_token = request.headers.get('Authorization')
-        response = requests.get('http://134.122.76.27:8118/api/v1/auth/me/', headers={'Authorization': access_token})
+        respond = requests.post('http://134.122.76.27:8114/api/v1/login/', data={
+            "service_id": 1,
+            "service_name": "Comment",
+            "secret_key": "abd5a92b-57f4-45f4-95f5-bbde628a2131"
+        })
+        response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
+                                 data={'token': respond.json().get('token')},
+                                 headers={'Authorization': access_token})
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
         comments = Comment.objects.all()
@@ -78,8 +88,6 @@ class CommentViewSet(ViewSet):
         manual_parameters=[
             openapi.Parameter(
                 'id', openapi.IN_PATH, description='Comment ID', type=openapi.TYPE_INTEGER, required=True),
-            openapi.Parameter(
-                'token', openapi.IN_PATH, description='token', type=openapi.TYPE_STRING, required=True),
         ],
         responses={
             404: 'Not Found',
@@ -88,13 +96,19 @@ class CommentViewSet(ViewSet):
         tags=['post']
     )
     def get_by_id(self, request, *args, **kwargs):
-        self.check_token(request.GET.get('token'))
         access_token = request.headers.get('Authorization')
-        response = requests.get('http://134.122.76.27:8118/api/v1/auth/me/', headers={'Authorization': access_token})
+        respond = requests.post('http://134.122.76.27:8114/api/v1/login/', data={
+            "service_id": 1,
+            "service_name": "Comment",
+            "secret_key": "abd5a92b-57f4-45f4-95f5-bbde628a2131"
+        })
+        response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
+                                 data={'token': respond.json().get('token')},
+                                 headers={'Authorization': access_token})
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        comment = Comment.objects.filter(id=kwargs['id']).first()
+        comment = Comment.objects.filter(id=kwargs['pk']).first()
         if comment is None:
             return Response(data={'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -105,11 +119,8 @@ class CommentViewSet(ViewSet):
         operation_summary="Delete comment by id",
         manual_parameters=[
             openapi.Parameter(
-                'id', openapi.IN_PATH, description='Comment ID', type=openapi.TYPE_INTEGER, required=True
+                'id', openapi.IN_QUERY, description='Comment ID', type=openapi.TYPE_INTEGER, required=True
             ),
-            openapi.Parameter(
-                'token', openapi.IN_PATH, description='token', type=openapi.TYPE_STRING, required=True
-            )
         ],
         responses={
             404: 'Not Found',
@@ -118,13 +129,19 @@ class CommentViewSet(ViewSet):
         tags=['post']
     )
     def destroy(self, request, *args, **kwargs):
-        self.check_token(request.data.get('token'))
         access_token = request.headers.get('Authorization')
-        response = requests.get('http://134.122.76.27:8118/api/v1/auth/me/', headers={'Authorization': access_token})
+        respond = requests.post('http://134.122.76.27:8114/api/v1/login/', data={
+            "service_id": 1,
+            "service_name": "Comment",
+            "secret_key": "abd5a92b-57f4-45f4-95f5-bbde628a2131"
+        })
+        response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
+                                 data={'token': respond.json().get('token')},
+                                 headers={'Authorization': access_token})
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        comment = Comment.objects.filter(id=kwargs['id']).first()
+        comment = Comment.objects.filter(id=kwargs['pk']).first()
         if comment is None:
             return Response(data={'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -139,14 +156,11 @@ class CommentViewSet(ViewSet):
     @swagger_auto_schema(
         operation_description='Get posts comments',
         operation_summary='Get posts comments',
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'post_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='post_id'),
-                'token': openapi.Schema(type=openapi.TYPE_STRING, description='token'),
-            },
-            required=['post_id', 'token']
-        ),
+        manual_parameters=[
+            openapi.Parameter(
+                'id', openapi.IN_QUERY, description='Comment ID', type=openapi.TYPE_INTEGER, required=True
+            ),
+        ],
         responses={
             404: 'Not Found',
             200: CommentSerializer()
@@ -154,11 +168,16 @@ class CommentViewSet(ViewSet):
         tags=['post']
     )
     def post_comments(self, request, *args, **kwargs):
-        self.check_token(request.data.get('token'))
-
         post_id = request.data.get('post_id')
         access_token = request.headers.get('Authorization')
-        response = requests.get('http://134.122.76.27:8118/api/v1/auth/me/', headers={'Authorization': access_token})
+        respond = requests.post('http://134.122.76.27:8114/api/v1/login/', data={
+            "service_id": 1,
+            "service_name": "Comment",
+            "secret_key": "abd5a92b-57f4-45f4-95f5-bbde628a2131"
+        })
+        response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
+                                 data={'token': respond.json().get('token')},
+                                 headers={'Authorization': access_token})
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 

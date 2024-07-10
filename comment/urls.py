@@ -5,5 +5,5 @@ urlpatterns = [
     path('comment/', CommentViewSet.as_view({'post': 'create'})),
     path('comments/', CommentViewSet.as_view({'get': 'get_all'})),
     path('comment/<int:pk>/', CommentViewSet.as_view({'get': 'get_by_id', 'delete': 'destroy'})),
-    path('post/', CommentViewSet.as_view({'post': 'post_comments'})),
+    path('post/', CommentViewSet.as_view({'get': 'post_comments'})),
 ]

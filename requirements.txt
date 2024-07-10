@@ -5,3 +5,4 @@ pillow==10.4.0
 sqlparse==0.5.0
 drf_yasg
 djangorestframework-simplejwt
+requests

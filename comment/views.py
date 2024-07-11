@@ -160,6 +160,6 @@ class CommentViewSet(ViewSet):
         if response.status_code != 200:
             return Response(response.json(), response.status_code)
 
-        comments = Comment.objects.filter(post_id=post_id)
+        comments = Comment.objects.filter(post_id=int(post_id))
         serializer = CommentSerializer(comments, many=True)
         return Response({'comments': serializer.data}, status=status.HTTP_200_OK)

@@ -52,7 +52,6 @@ class CommentViewSet(ViewSet):
             requests.post('http://134.122.76.27:8112/api/v1/notification/',
                           json={"user_id": response.json()['id'], "notification_type": 2,
                                 "token": str(self.get_token().json().get('token'))})
-            print(response.json()['id'])
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

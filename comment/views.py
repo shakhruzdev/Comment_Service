@@ -65,13 +65,8 @@ class CommentViewSet(ViewSet):
     )
     def get_all(self, request):
         access_token = request.headers.get('Authorization')
-        respond = requests.post('http://134.122.76.27:8114/api/v1/login/', data={
-            "service_id": 1,
-            "service_name": "Comment",
-            "secret_key": "abd5a92b-57f4-45f4-95f5-bbde628a2131"
-        })
         response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
-                                 data={'token': respond.json().get('token')},
+                                 data={'token': self.get_token().json().get('token')},
                                  headers={'Authorization': access_token})
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -96,13 +91,8 @@ class CommentViewSet(ViewSet):
     )
     def get_by_id(self, request, *args, **kwargs):
         access_token = request.headers.get('Authorization')
-        respond = requests.post('http://134.122.76.27:8114/api/v1/login/', data={
-            "service_id": 1,
-            "service_name": "Comment",
-            "secret_key": "abd5a92b-57f4-45f4-95f5-bbde628a2131"
-        })
         response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
-                                 data={'token': respond.json().get('token')},
+                                 data={'token': self.get_token().json().get('token')},
                                  headers={'Authorization': access_token})
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -129,13 +119,8 @@ class CommentViewSet(ViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         access_token = request.headers.get('Authorization')
-        respond = requests.post('http://134.122.76.27:8114/api/v1/login/', data={
-            "service_id": 1,
-            "service_name": "Comment",
-            "secret_key": "abd5a92b-57f4-45f4-95f5-bbde628a2131"
-        })
         response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
-                                 data={'token': respond.json().get('token')},
+                                 data={'token': self.get_token().json().get('token')},
                                  headers={'Authorization': access_token})
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -169,13 +154,8 @@ class CommentViewSet(ViewSet):
     def post_comments(self, request, *args, **kwargs):
         post_id = request.data.get('post_id')
         access_token = request.headers.get('Authorization')
-        respond = requests.post('http://134.122.76.27:8114/api/v1/login/', data={
-            "service_id": 1,
-            "service_name": "Comment",
-            "secret_key": "abd5a92b-57f4-45f4-95f5-bbde628a2131"
-        })
         response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
-                                 data={'token': respond.json().get('token')},
+                                 data={'token': self.get_token().json().get('token')},
                                  headers={'Authorization': access_token})
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)

@@ -142,7 +142,7 @@ class CommentViewSet(ViewSet):
         operation_summary='Get posts comments',
         manual_parameters=[
             openapi.Parameter(
-                'id', openapi.IN_QUERY, description='Comment ID', type=openapi.TYPE_INTEGER, required=True
+                'post_id', openapi.IN_QUERY, description='POST ID', type=openapi.TYPE_INTEGER, required=True
             ),
         ],
         responses={
@@ -153,12 +153,12 @@ class CommentViewSet(ViewSet):
     )
     def post_comments(self, request, *args, **kwargs):
         post_id = request.data.get('post_id')
-        access_token = request.headers.get('Authorization')
-        response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
-                                 data={'token': self.get_token().json().get('token')},
-                                 headers={'Authorization': access_token})
+        token = request.data.get('token')
+        response = requests.post('http://134.122.76.27:8114/api/v1/check/', data={
+            "token": token
+        })
         if response.status_code != 200:
-            return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(response.json(), response.status_code)
 
         comments = Comment.objects.filter(post_id=post_id)
         serializer = CommentSerializer(comments, many=True)

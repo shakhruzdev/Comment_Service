@@ -65,7 +65,11 @@ class CommentViewSet(ViewSet):
                           json={"user_id": response.json()['id'], "notification_type": 2,
                                 "token": str(self.get_token().json().get('token')),
                                 "message": serializer.validated_data['message']})
-
+            requests.post('http://134.122.76.27:8111/api/v1/post/update-comment/', data={
+                "token": str(self.get_token().json().get('token')),
+                "post_id": post_id,
+                "add": "update"
+            })
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -147,6 +151,11 @@ class CommentViewSet(ViewSet):
             return Response({'error': 'You have not permission to delete this comment'},
                             status=status.HTTP_400_BAD_REQUEST)
 
+        requests.post('http://134.122.76.27:8111/api/v1/post/update-comment/', data={
+            "token": str(self.get_token().json().get('token')),
+            "post_id": comment.post_id,
+            "add": "delete"
+        })
         comment.delete()
 
         return Response({'message': 'Successfully deleted'}, status=status.HTTP_200_OK)

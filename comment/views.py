@@ -110,7 +110,7 @@ class CommentViewSet(ViewSet):
 
         comment = Comment.objects.filter(id=kwargs['pk']).first()
 
-        if comment.author_id == response.json()['id']:
+        if comment.author_id != response.json()['id']:
             return Response(
                 data={'error': "You haven't permission to view this comment"}, status=status.HTTP_400_BAD_REQUEST
             )

@@ -108,7 +108,13 @@ class CommentViewSet(ViewSet):
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        comment = Comment.objects.filter(id=kwargs['pk']).first()
+        comment = Comment.objects.filter(id=kwargs['pk'], author_id=response.json()['id']).first()
+
+        if comment.author_id != response.json()['id']:
+            return Response(
+                data={'error': "You haven't permission to view this comment"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         if comment is None:
             return Response(data={'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
 

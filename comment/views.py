@@ -110,13 +110,13 @@ class CommentViewSet(ViewSet):
 
         comment = Comment.objects.filter(id=kwargs['pk']).first()
 
+        if comment is None:
+            return Response(data={'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
+
         if comment.author_id != response.json()['id']:
             return Response(
                 data={'error': "You haven't permission to view this comment"}, status=status.HTTP_400_BAD_REQUEST
             )
-
-        if comment is None:
-            return Response(data={'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response(data=CommentSerializer(comment).data, status=status.HTTP_200_OK)
 

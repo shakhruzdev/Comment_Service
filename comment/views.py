@@ -79,9 +79,7 @@ class CommentViewSet(ViewSet):
     )
     def get_all(self, request):
         access_token = request.headers.get('Authorization')
-        response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
-                                 data={'token': self.get_token().json().get('token')},
-                                 headers={'Authorization': access_token})
+        response = self.auth_me(request.data.get('token'), pk=access_token)
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
         comments = Comment.objects.filter(author_id=response.json()['id'])
@@ -105,9 +103,7 @@ class CommentViewSet(ViewSet):
     )
     def get_by_id(self, request, *args, **kwargs):
         access_token = request.headers.get('Authorization')
-        response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
-                                 data={'token': self.get_token().json().get('token')},
-                                 headers={'Authorization': access_token})
+        response = self.auth_me(request.data.get('token'), pk=access_token)
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -139,9 +135,7 @@ class CommentViewSet(ViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         access_token = request.headers.get('Authorization')
-        response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
-                                 data={'token': self.get_token().json().get('token')},
-                                 headers={'Authorization': access_token})
+        response = self.auth_me(request.data.get('token'), pk=access_token)
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 

@@ -19,7 +19,7 @@ class CommentViewSet(ViewSet):
         return response
 
     def get_post_id(self, pk):
-        response = requests.get(f'http://134.122.76.27:8111/api/v1/post/detail-delete/{pk}/', data={
+        response = requests.post(f'http://134.122.76.27:8111/api/v1/post/detail-delete/{pk}/', data={
             "token": str(self.get_token().json().get('token')),
         })
         return response

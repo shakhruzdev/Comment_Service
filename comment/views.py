@@ -24,6 +24,13 @@ class CommentViewSet(ViewSet):
         })
         return response
 
+    def auth_me(self, request):
+        access_token = request.headers.get('Authorization')
+        response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
+                                 json={'token': self.get_token().json().get('token')},
+                                 headers={'Authorization': access_token})
+        return response
+
     @swagger_auto_schema(
         operation_description='Create a comment',
         operation_summary='Create a comment',
@@ -42,11 +49,7 @@ class CommentViewSet(ViewSet):
         tags=['post']
     )
     def create(self, request):
-        access_token = request.headers.get('Authorization')
-        response = requests.post('http://134.122.76.27:8118/api/v1/auth/me/',
-                                 json={'token': self.get_token().json().get('token')},
-                                 headers={'Authorization': access_token})
-
+        response = self.auth_me(request.data.get('token'))
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
         post_id = request.data.get('post_id')

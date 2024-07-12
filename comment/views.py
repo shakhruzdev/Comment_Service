@@ -144,7 +144,7 @@ class CommentViewSet(ViewSet):
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
         comment = Comment.objects.filter(id=kwargs['pk']).first()
-        if comment is None and kwargs['pk'] < 0:
+        if comment is None:
             return Response(data={'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
 
         if comment.author_id != response.json()['id']:

@@ -19,8 +19,9 @@ class CommentViewSet(ViewSet):
         return response
 
     def get_post_id(self, pk):
-        response = requests.get(f'http://134.122.76.27:8111/api/v1/post/{pk}/', json={
+        response = requests.post(f'http://134.122.76.27:8111/api/v1/post/check/', data={
             "token": str(self.get_token().json().get('token')),
+            "post_id": pk
         })
         return response
 
@@ -49,13 +50,13 @@ class CommentViewSet(ViewSet):
 
         if response.status_code != 200:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
-
+        post_id = request.data.get('post_id')
         request.data['author_id'] = response.json()['id']
         serializer = CommentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.validated_data['author_id'] = response.json()['id']
-            response2 = self.get_post_id(request.data.get('post_id'))
-            if response2 is None:
+            response2 = self.get_post_id(post_id)
+            if response2.status_code != 200:
                 return Response({'error': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
             serializer.save()
             requests.post('http://134.122.76.27:8112/api/v1/notification/',
@@ -143,11 +144,11 @@ class CommentViewSet(ViewSet):
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
         comment = Comment.objects.filter(id=kwargs['pk']).first()
-        if comment is None:
+        if comment is None and kwargs['pk'] < 0:
             return Response(data={'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
 
         if comment.author_id != response.json()['id']:
-            return Response({'error': 'You have not permission to update this comment'},
+            return Response({'error': 'You have not permission to delete this comment'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         comment.delete()
@@ -177,8 +178,8 @@ class CommentViewSet(ViewSet):
         if response.status_code != 200:
             return Response(response.json(), response.status_code)
 
-        response2 = self.get_post_id(request.data.get('post_id'))
-        if response2 is None:
+        response2 = self.get_post_id(post_id)
+        if response2.status_code != 200:
             return Response({'error': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
         comments = Comment.objects.filter(post_id=int(post_id))
         serializer = CommentSerializer(comments, many=True)
